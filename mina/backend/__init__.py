@@ -123,6 +123,9 @@ def _patch_pdm_metadata(package: str):
     if "is-purelib" in package_conf:
         pdm_settings["is-purelib"] = package_conf["is-purelib"]
 
+    if "entry-points" in package_conf:
+        pdm_settings["entry-points"] = package_conf["entry-points"]
+
     _meta._metadata = dict(project_conf, **package_conf)
     _meta._tool_settings = pdm_settings
     # print(_meta.validate(False))

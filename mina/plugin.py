@@ -8,20 +8,6 @@ from pdm.cli.commands.base import BaseCommand
 if TYPE_CHECKING:
     from pdm.core import Core
 
-
-class HelloCommand(BaseCommand):
-    """Say hello to the specified person.
-    If none is given, will read from "hello.name" config.
-    """
-
-    def add_arguments(self, parser: ArgumentParser):
-        parser.add_argument("-n", "--name", help="the person's name to whom you greet")
-
-    def handle(self, project: Project, options: Namespace):
-        print(project, options.name)
-        # name = options.name or project.config["hello.name"]
-        # print(f"Hello, {name}")
-
 class MinaCommand(BaseCommand):
     """Mina command.
     """
@@ -37,5 +23,4 @@ class MinaCommand(BaseCommand):
 
 
 def ensure_pdm(core: "Core"):
-    core.register_command(HelloCommand, "hello")
     core.register_command(MinaCommand, "mina")
