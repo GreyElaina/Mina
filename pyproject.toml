@@ -26,7 +26,7 @@ dev = [
 
 
 [build-system]
-requires = ["mina-build>=0.1.7"]
+requires = ["mina-build>=0.2.0"]
 build-backend = "mina.backend"
 
 #
@@ -54,7 +54,7 @@ raw-dependencies = []
 
 [tool.mina.packages."backend".project]
 name = "mina-build"
-version = "0.1.7"
+version = "0.2.0"
 description = "build backend for Mina Package Structure"
 authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},

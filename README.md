@@ -24,11 +24,22 @@ CLI 中虽提供了一个 `pdm mina build <package>` 指令,
 
 ```toml
 [build-system]
-requires = ["mina-build>=0.1.7"]
+requires = ["mina-build>=0.2.0"]
 build-backend = "mina.backend"
 
 [tool.mina]
 enabled = true
+```
+
+如果你希望, 你可以让 Mina 在处理和注入分包的 `project` 定义时, 使用覆盖工作区配置的形式来获得 Project Spec; 本特性默认不启用:
+
+```toml
+[tool.mina]
+enabled = true
+override-global = true  # 全局启用该特性
+
+[tool.mina.packages."core"]
+override = true  # 仅在 core 分包启用该特性
 ```
 
 虽然 CLI 是可选的, 并且到现在还只支持 `pdm`, 但还是装上吧:
@@ -63,20 +74,31 @@ mina-example/
 [tool.mina.packages."elizabeth"]
 ```
 
-`Mina` 的分包声明沿用了 `PEP-621` 中的声明方式, 但并非完全都是, 所以有时候你或许会被 pdm/otherpkg 的检查阻拦下, 这个问题后续会得到解决.
+`Mina` 的分包声明沿用了 `PEP-621` 中的声明方式.
 我们这里以配置分包 `core` 举例.
 
 ```toml
 [tool.mina.packages."core"]
+includes = [
+    "avilla/core"
+]
+# 相当于 tool.pdm.includes, 如果不填我不知道会发生什么, 可能就是普通的情况 -- 打包 name 所指向的模块.
+
+# raw-dependencies = [...]
+#    这一配置项会在处理完 project.dependencies 后直接排入依赖声明.
+#    你可以用这个特性来声明分包之间的依赖.
+
+# override = false
+
+[tool.mina.packages."core".project]
 name = "avilla-core"  # 分包在 `pypi` 上的名称, 必填
 description = "..."
 authors = ["..."]
-includes = ["avilla/core"]  # 相当于 tool.pdm.includes, 必填
-version = "0.1.0"  # 版本, 后续会提供动态获取的支持, 当然是 pdm 同款. 必填(目前).
-requires-python = ">=3.9"  # 建议填入
+version = "0.1.0"  # 版本, 不保证支持动态获取(因为我没用过也没试过)
+requires-python = ">=3.9"
 dependencies = [  # 建议填入
     "aiohttp",  # 这里虽然使用 `PEP-508` 规范, 但所有包都会被重定向至 project.dependencies 上的同名项.
-    "starlette",  # 后续会加入其他的支持.
+    "starlette",
     "pydantic"
 ]
 optional-dependencies = {
@@ -86,10 +108,6 @@ entry-points = {pdm = {mina = "mina.plugin:ensure_pdm"}}  # entry-points 的声�
 ```
 
 填入后, 你可以通过 CLI 的 `pdm mina list` 简单的检查, 或是直接 `pdm mina build <pkg>` 测试.
-
-因为未知原因, 我没法测试 `pdm-publish`, 但理论上支持, `twine` 倒是可以用, 我试过了.
-
-当然如果你真的要 `--no-clean` 我也没办法...
 
 # 开源协议
 

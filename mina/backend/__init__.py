@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional
 
 from pdm.pep517._vendor import tomli
 from pdm.pep517._vendor.packaging.requirements import Requirement
@@ -68,9 +68,6 @@ def _using_override(package: str | None) -> bool:
         if "override" in pkg:
             return pkg["override"]
     return _using_override_global()
-
-
-# TODO: raw dep declare
 
 
 def _patch_dep(_meta: Metadata, pkg_project: dict[str, Any]):
