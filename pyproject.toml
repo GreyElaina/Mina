@@ -40,8 +40,18 @@ mina = "mina.plugin:ensure_pdm"
 
 [tool.mina]
 enabled = true
+override-global = false  # default value
+
 
 [tool.mina.packages."backend"]
+override = false
+includes = [
+    "mina/backend"
+]
+# dev-dependencies is owned by workspace.
+
+
+[tool.mina.packages."backend".project]
 name = "mina-build"
 version = "0.1.7"
 description = "build backend for Mina Package Structure"
@@ -54,10 +64,8 @@ dependencies = [
 requires-python = ">=3.9"
 readme = "README.build.md"
 license = {text = "MIT"}
-includes = [
-    "mina/backend"
-]
 entry-points = {}
+
 
 [tool.mina.packages."cli-pdm"]
 name = "pdm-mina"

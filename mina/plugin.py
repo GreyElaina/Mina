@@ -1,16 +1,18 @@
 from argparse import ArgumentParser, Namespace
 from typing import TYPE_CHECKING
+
+from pdm.cli.commands.base import BaseCommand
+from pdm.project.core import Project
+
 from mina.commands.build import MinaBuildCommand
 from mina.commands.list import MinaPackagesListCommand
-from pdm.project.core import Project
-from pdm.cli.commands.base import BaseCommand
 
 if TYPE_CHECKING:
     from pdm.core import Core
 
+
 class MinaCommand(BaseCommand):
-    """Mina command.
-    """
+    """Mina command."""
 
     def add_arguments(self, parser: ArgumentParser):
         self.parser = parser

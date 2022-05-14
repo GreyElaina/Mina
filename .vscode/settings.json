@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
-        "mina"
+        "mina",
+        "tomli",
+        "deps"
     ],
     "python.formatting.provider": "black"
 }

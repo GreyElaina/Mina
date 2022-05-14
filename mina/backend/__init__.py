@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import functools
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
@@ -17,16 +19,29 @@ from pdm.pep517.sdist import SdistBuilder
 from pdm.pep517.wheel import WheelBuilder
 
 
-def _get_tool_mina() -> dict[str, Any]:
+@functools.lru_cache(None)
+def _get_config_root():
     cwd = Path.cwd()
-    config = tomli.loads((cwd / "pyproject.toml").read_text())
+    return tomli.loads((cwd / "pyproject.toml").read_text())
 
-    return config.get("tool", {}).get("mina", {})
+
+@functools.lru_cache(None)
+def _get_root_project():
+    return _get_config_root().get("project", {})
+
+
+@functools.lru_cache(None)
+def _get_tool_mina() -> dict[str, Any]:
+    return _get_config_root().get("tool", {}).get("mina", {})
+
+
+@functools.lru_cache(None)
+def _get_package(package: str) -> Dict[str, Any]:
+    return _get_tool_mina().get("packages", {}).get(package, {})
 
 
 def _has_package(package: str) -> bool:
-    package_conf = _get_tool_mina().get("packages", {}).get(package, None)
-    return package_conf is not None
+    return _get_package(package) is not None
 
 
 def _using_mina_package_structure() -> bool:
@@ -43,6 +58,62 @@ def _get_build_target(
     )
 
 
+def _using_override_global() -> bool:
+    return _get_tool_mina().get("override-global", False)
+
+
+def _using_override(package: str | None) -> bool:
+    if package and _has_package(package):
+        pkg = _get_package(package)
+        if "override" in pkg:
+            return pkg["override"]
+    return _using_override_global()
+
+
+# TODO: raw dep declare
+
+
+def _patch_dep(_meta: Metadata, pkg_project: dict[str, Any]):
+    if "dependencies" in pkg_project:
+        optional_dependencies = []
+
+        deps = pkg_project["dependencies"]
+        workspace_deps = _get_root_project().get("dependencies", [])
+        workspace_deps = [Requirement(i) for i in workspace_deps]
+        workspace_deps = {i.name: i for i in workspace_deps if i.name is not None}
+
+        for dep in deps:
+            req = Requirement(dep)
+            if req.name is None:
+                raise ValueError(f"'{dep}' is not a valid requirement")
+            if req.name not in workspace_deps:
+                raise ValueError(f"{req.name} is not defined in project requirements")
+            optional_dependencies.append(str(workspace_deps[req.name]))
+
+        pkg_project["dependencies"] = _meta._convert_dependencies(optional_dependencies)
+
+    if "optional-dependencies" in pkg_project:
+        optional_dependencies = []
+
+        deps = pkg_project["optional-dependencies"]
+
+        workspace_deps = _get_root_project().get("optional-dependencies", [])
+        workspace_deps = [Requirement(i) for i in workspace_deps]
+        workspace_deps = {i.name: i for i in workspace_deps if i.name is not None}
+
+        for dep in deps:
+            req = Requirement(dep)
+            if req.name is None:
+                raise ValueError(f"'{dep}' is not a valid requirement")
+            if req.name not in workspace_deps:
+                raise ValueError(f"{req.name} is not defined in project requirements")
+            optional_dependencies.append(str(workspace_deps[req.name]))
+
+        pkg_project["optional-dependencies"] = _meta._convert_dependencies(
+            optional_dependencies
+        )
+
+
 def _patch_pdm_metadata(package: str):
     cwd = Path.cwd()
     _meta = Metadata(cwd / "pyproject.toml")
@@ -52,65 +123,16 @@ def _patch_pdm_metadata(package: str):
     package_conf = (
         config.get("tool", {}).get("mina", {}).get("packages", {}).get(package, None)
     )
-
-    project_conf = config.get("project", {})
-
-    project_deps = project_conf.get("dependencies", [])
-    project_deps = [Requirement(i) for i in project_deps]
-    project_deps = {i.name: i for i in project_deps if i.name is not None}
-
-    optional_deps = project_conf.get("optional-dependencies", {})
-    optional_deps = [Requirement(i) for i in optional_deps]
-    optional_deps = {i.name: i for i in optional_deps if i.name is not None}
-
     if package_conf is None:
         raise ValueError(f"No package named '{package}'")
 
-    project_conf["mina-package"] = package
-
-    if "dependencies" in package_conf:
-        package_dependencies = []
-        # 处理 requirement, 将其 patch 到 global requirements
-        for pkgreq in package_conf["dependencies"]:
-            req = Requirement(pkgreq)
-            if req.name is None:
-                raise ValueError(f"'{pkgreq}' is not a valid requirement")
-            if req.name not in project_deps:
-                raise ValueError(f"{req.name} is not defined in project requirements")
-            package_dependencies.append(str(project_deps[req.name]))
-
-        package_dependencies = _meta._convert_dependencies(package_dependencies)
-        package_conf["dependencies"] = package_dependencies
-
-    if "optional-dependencies" in package_conf:
-        package_optional_dependencies: Dict[str, List[str]] = {}
-        # 处理 requirement, 将其 patch 到 global requirements
-        for setname, pkgreq in package_conf["optional-dependencies"].items():
-            req = Requirement(pkgreq)
-            if req.name is None:
-                raise ValueError(f"'{pkgreq}' is not a valid requirement")
-            package_optional_dependencies.setdefault(setname, [])
-            if req.name in project_deps:
-                package_optional_dependencies[setname].append(
-                    str(project_deps[req.name])
-                )
-            elif req.name in optional_deps:
-                package_optional_dependencies[setname].append(
-                    str(optional_deps[req.name])
-                )
-            else:
-                raise ValueError(
-                    f"{req.name} is not defined in project requirements or optional-dependencies"
-                )
-
-        package_optional_dependencies = _meta._convert_optional_dependencies(
-            package_optional_dependencies
-        )
-        package_conf["optional-dependencies"] = package_optional_dependencies
+    project_conf = config.get("project", {})
+    _patch_dep(_meta, package_conf)
 
     pdm_settings = config.get("tool", {}).get("pdm", {})
 
-    # dev-dependencies is unnecessary for a pkg, it will be ignored by mina.
+    # dev-dependencies is unnecessary for a pkg(for workspace), it will be ignored by mina.
+
     if "includes" in package_conf:
         pdm_settings["includes"] = package_conf["includes"]
 
@@ -126,9 +148,12 @@ def _patch_pdm_metadata(package: str):
     if "entry-points" in package_conf:
         pdm_settings["entry-points"] = package_conf["entry-points"]
 
-    _meta._metadata = dict(project_conf, **package_conf)
+    if _using_override(package):
+        _meta._metadata = dict(project_conf, **package_conf)
+    else:
+        _meta._metadata = package_conf
     _meta._tool_settings = pdm_settings
-    # print(_meta.validate(False))
+    _meta.validate(True)
 
     return _meta
 

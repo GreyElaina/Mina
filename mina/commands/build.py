@@ -1,14 +1,17 @@
 from __future__ import annotations
+
+import argparse
 import shutil
+from argparse import Namespace
+from pathlib import Path
+
 from pdm.builders.sdist import SdistBuilder
 from pdm.builders.wheel import WheelBuilder
-from pdm.project.core import Project
-from pdm.cli.commands.base import BaseCommand
-from argparse import Namespace
 from pdm.cli.actions import do_build as do_build_pdm
-import argparse
+from pdm.cli.commands.base import BaseCommand
 from pdm.exceptions import ProjectError
-from pathlib import Path
+from pdm.project.core import Project
+
 
 def do_build_mina(
     project: Project,
@@ -17,17 +20,13 @@ def do_build_mina(
     option_wheel: bool = True,
     option_dest: str = "dist",
     option_clean: bool = True,
-    config_settings: dict[str, str] | None = None
+    config_settings: dict[str, str] | None = None,
 ):
     if project.is_global:
-        project.core.ui.echo(
-            "You can't build packages in global project.", err=True
-        )
+        project.core.ui.echo("You can't build packages in global project.", err=True)
         raise ProjectError("Global project not supported")
     if not option_wheel and not option_sdist:
-        project.core.ui.echo(
-            "You must build at least one of sdist or wheel.", err=True
-        )
+        project.core.ui.echo("You must build at least one of sdist or wheel.", err=True)
         raise ProjectError("No build type specified")
     dest = Path(option_dest).absolute()
     if option_clean:
@@ -52,11 +51,12 @@ def do_build_mina(
     project.core.ui.echo(f"Build completed: {len(artifacts)} artifacts")
     return artifacts
 
+
 class MinaBuildCommand(BaseCommand):
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "package",
-            #nargs="?",
+            # nargs="?",
             help="The package to build, which must be defined in pyproject.toml.",
         )
         parser.add_argument(
@@ -111,6 +111,6 @@ class MinaBuildCommand(BaseCommand):
             options.wheel,
             options.dest,
             options.clean,
-            config_settings
+            config_settings,
         )
         # artifacts 后面还可以拿来做其他的事情, 比如 publish.
