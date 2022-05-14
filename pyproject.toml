@@ -48,6 +48,7 @@ override = false
 includes = [
     "mina/backend"
 ]
+raw-dependencies = []
 # dev-dependencies is owned by workspace.
 
 
@@ -64,17 +65,21 @@ dependencies = [
 requires-python = ">=3.9"
 readme = "README.build.md"
 license = {text = "MIT"}
-entry-points = {}
 
 
 [tool.mina.packages."cli-pdm"]
-name = "pdm-mina"
-version = "0.1.0"
 includes = [
     "mina"
 ]
 excludes = [
     "mina/backend"
+]
+
+[tool.mina.packages."cli-pdm".project]
+name = "pdm-mina"
+version = "0.1.0"
+includes = [
+    "mina"
 ]
 dependencies = [
     "pdm",

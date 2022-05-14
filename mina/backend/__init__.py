@@ -148,6 +148,9 @@ def _patch_pdm_metadata(package: str):
     if "entry-points" in package_conf:
         pdm_settings["entry-points"] = package_conf["entry-points"]
 
+    if "raw-dependencies" in package_conf and _meta.dependencies is not None:
+        _meta.dependencies.extend(package_conf["raw-dependencies"])
+
     if _using_override(package):
         _meta._metadata = dict(project_conf, **package_conf)
     else:
