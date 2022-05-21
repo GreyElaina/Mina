@@ -1,5 +1,7 @@
 # Mina Package Structure
 
+[简体中文](README.md) | [English](README.en.md)
+
 `Mina` 是基于 `pdm-pep517` 的 "模块分包" 实现.
 
 `Mina` 同样也是 `Mina Package Structure` 的实现, 作为一门独特的规范, 其具有以下特性:
