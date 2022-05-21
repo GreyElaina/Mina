@@ -56,7 +56,6 @@ class MinaBuildCommand(BaseCommand):
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "package",
-            # nargs="?",
             help="The package to build, which must be defined in pyproject.toml.",
         )
         parser.add_argument(
@@ -94,7 +93,7 @@ class MinaBuildCommand(BaseCommand):
 
     def handle(self, project: Project, options: Namespace):
         package = options.package
-        config_settings = {"--package": package}
+        config_settings = {"--mina-target": package}
         if options.config_setting:
             for item in options.config_setting:
                 name, _, value = item.partition("=")

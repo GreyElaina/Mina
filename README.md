@@ -16,7 +16,7 @@
 其他情况下的行为与 `pdm-pep517` 无异.
 
 CLI 中虽提供了一个 `pdm mina build <package>` 指令,
-但你也可以通过环境变量 `MINA_BUILD_TARGET` 或是 `config-setting` 中设置 `--package` 指定需要打包的分包.
+但你也可以通过环境变量 `MINA_BUILD_TARGET` 或是 `config-setting` 中设置 `--mina-target` 指定需要打包的分包.
 
 ## Quick Start
 
@@ -24,7 +24,7 @@ CLI 中虽提供了一个 `pdm mina build <package>` 指令,
 
 ```toml
 [build-system]
-requires = ["mina-build>=0.2.0"]
+requires = ["mina-build>=0.2.5"]
 build-backend = "mina.backend"
 
 [tool.mina]
@@ -107,7 +107,8 @@ optional-dependencies = {
 entry-points = {pdm = {mina = "mina.plugin:ensure_pdm"}}  # entry-points 的声明方式
 ```
 
-填入后, 你可以通过 CLI 的 `pdm mina list` 简单的检查, 或是直接 `pdm mina build <pkg>` 测试.
+填入后, 你可以通过 CLI 的 `pdm mina list` 简单的检查, 或是直接 `pdm mina build <pkg>` 测试;
+这里推荐使用 `twine` + `keyring` 发布到 PyPI 上, 当然 `pdm-publish` 也是可以的.
 
 # 开源协议
 

@@ -52,7 +52,7 @@ def _get_build_target(
     config_settings: Optional[Mapping[str, Any]] = None
 ) -> str | None:
     return (
-        (config_settings or {}).get("--package")
+        (config_settings or {}).get("--mina-target")
         or os.environ.get("MINA_BUILD_TARGET")
         or _get_tool_mina().get("mina-build-target")
     )
@@ -74,12 +74,12 @@ def _patch_dep(_meta: Metadata, pkg_project: dict[str, Any]):
     if "dependencies" in pkg_project:
         optional_dependencies = []
 
-        deps = pkg_project["dependencies"]
+        optional_deps = pkg_project["dependencies"]
         workspace_deps = _get_root_project().get("dependencies", [])
         workspace_deps = [Requirement(i) for i in workspace_deps]
         workspace_deps = {i.name: i for i in workspace_deps if i.name is not None}
 
-        for dep in deps:
+        for dep in optional_deps:
             req = Requirement(dep)
             if req.name is None:
                 raise ValueError(f"'{dep}' is not a valid requirement")
@@ -90,23 +90,27 @@ def _patch_dep(_meta: Metadata, pkg_project: dict[str, Any]):
         pkg_project["dependencies"] = _meta._convert_dependencies(optional_dependencies)
 
     if "optional-dependencies" in pkg_project:
-        optional_dependencies = []
+        optional_dependencies = {}
 
         deps = pkg_project["optional-dependencies"]
 
-        workspace_deps = _get_root_project().get("optional-dependencies", [])
+        # workspace don't use optional dep: it must contains ALL deps mina required.
+        workspace_deps = _get_root_project().get("dependencies", [])
         workspace_deps = [Requirement(i) for i in workspace_deps]
         workspace_deps = {i.name: i for i in workspace_deps if i.name is not None}
 
-        for dep in deps:
-            req = Requirement(dep)
-            if req.name is None:
-                raise ValueError(f"'{dep}' is not a valid requirement")
-            if req.name not in workspace_deps:
-                raise ValueError(f"{req.name} is not defined in project requirements")
-            optional_dependencies.append(str(workspace_deps[req.name]))
+        for group, optional_deps in deps.items():
+            group_deps = []
+            for dep in optional_deps:
+                req = Requirement(dep)
+                if req.name is None:
+                    raise ValueError(f"'{dep}' is not a valid requirement")
+                if req.name not in workspace_deps:
+                    raise ValueError(f"{req.name} is not defined in project requirements")
+                group_deps.append(str(workspace_deps[req.name]))
+            optional_dependencies[group] = group_deps
 
-        pkg_project["optional-dependencies"] = _meta._convert_dependencies(
+        pkg_project["optional-dependencies"] = _meta._convert_optional_dependencies(
             optional_dependencies
         )
 
@@ -122,13 +126,13 @@ def _patch_pdm_metadata(package: str):
     )
     if package_conf is None:
         raise ValueError(f"No package named '{package}'")
+    package_project = package_conf.get("project", {})
 
-    project_conf = config.get("project", {})
-    _patch_dep(_meta, package_conf)
+    _patch_dep(_meta, package_project)
 
     pdm_settings = config.get("tool", {}).get("pdm", {})
 
-    # dev-dependencies is unnecessary for a pkg(for workspace), it will be ignored by mina.
+    # dev-dependencies is unnecessary for a pkg(for workspace), so it will be ignored by mina.
 
     if "includes" in package_conf:
         pdm_settings["includes"] = package_conf["includes"]
@@ -149,9 +153,11 @@ def _patch_pdm_metadata(package: str):
         _meta.dependencies.extend(package_conf["raw-dependencies"])
 
     if _using_override(package):
-        _meta._metadata = dict(project_conf, **package_conf)
+        project_conf = config.get("project", {})
+        _meta._metadata = dict(project_conf, **package_project)
     else:
-        _meta._metadata = package_conf
+        _meta._metadata = package_project
+
     _meta._tool_settings = pdm_settings
     _meta.validate(True)
 

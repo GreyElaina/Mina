@@ -8,7 +8,8 @@ authors = [
 dependencies = [
     "pdm>=1.14.1",
     "pdm-pep517>=0.12.3",
-    "mina-build>=0.1.7",
+    "mina-build>=0.2.1",
+    "twine>=4.0.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -26,14 +27,8 @@ dev = [
 
 
 [build-system]
-requires = ["mina-build>=0.2.0"]
+requires = ["mina-build>=0.2.5"]
 build-backend = "mina.backend"
-
-#
-#[build-system]
-#requires = ["pdm-pep517"]
-#build-backend = "pdm.pep517.api"
-#
 
 [project.entry-points.pdm]
 mina = "mina.plugin:ensure_pdm"
@@ -54,7 +49,7 @@ raw-dependencies = []
 
 [tool.mina.packages."backend".project]
 name = "mina-build"
-version = "0.2.0"
+version = "0.2.5"
 description = "build backend for Mina Package Structure"
 authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},
