@@ -14,7 +14,7 @@
 `Mina` 提供了名为 [`mina-build`](https://pypi.org/project/mina-build/) 的 `PEP-517` 实现,
 同时还提供作为 `PDM Plugin` 的简易 CLI 实现;
 
-`mina-build` 仅在 `pyproject.toml` 中 `tool.mina.enabled` 被设为 `true` 时起作用,
+`mina-build` 仅在配置了需要构建的分包名称时才会注入 `pdm-pep517` 的构建流程,
 其他情况下的行为与 `pdm-pep517` 无异.
 
 CLI 中虽提供了一个 `pdm mina build <package>` 指令,
@@ -28,9 +28,6 @@ CLI 中虽提供了一个 `pdm mina build <package>` 指令,
 [build-system]
 requires = ["mina-build>=0.2.5"]
 build-backend = "mina.backend"
-
-[tool.mina]
-enabled = true
 ```
 
 如果你希望, 你可以让 Mina 在处理和注入分包的 `project` 定义时, 使用覆盖工作区配置的形式来获得 Project Spec; 本特性默认不启用:

@@ -44,10 +44,6 @@ def _has_package(package: str) -> bool:
     return _get_package(package) is not None
 
 
-def _using_mina_package_structure() -> bool:
-    return _get_tool_mina().get("enabled", False)
-
-
 def _get_build_target(
     config_settings: Optional[Mapping[str, Any]] = None
 ) -> str | None:
@@ -169,12 +165,8 @@ def prepare_metadata_for_build_wheel(
 ) -> str:
     """Prepare the metadata, places it in metadata_directory"""
     _patched_meta = None
-    if _using_mina_package_structure():
-        mina_target: Optional[str] = _get_build_target(config_settings)
-        if mina_target is None:
-            raise ValueError(
-                "detected mina structure enabled but no current package specified to build"
-            )
+    mina_target = _get_build_target(config_settings)
+    if mina_target is not None:
         if not _has_package(mina_target):
             raise ValueError(f"{mina_target} is not defined as a mina package")
         _patched_meta = _patch_pdm_metadata(mina_target)  # os.chdir may break behavior
@@ -191,12 +183,8 @@ def build_wheel(
 ) -> str:
     """Builds a wheel, places it in wheel_directory"""
     _patched_meta = None
-    if _using_mina_package_structure():
-        mina_target: Optional[str] = _get_build_target(config_settings)
-        if mina_target is None:
-            raise ValueError(
-                "detected mina structure enabled but no current package specified to build"
-            )
+    mina_target = _get_build_target(config_settings)
+    if mina_target is not None:
         if not _has_package(mina_target):
             raise ValueError(f"{mina_target} is not defined as a mina package")
         _patched_meta = _patch_pdm_metadata(mina_target)  # os.chdir may break behavior
@@ -211,12 +199,8 @@ def build_sdist(
 ) -> str:
     """Builds an sdist, places it in sdist_directory"""
     _patched_meta = None
-    if _using_mina_package_structure():
-        mina_target: Optional[str] = _get_build_target(config_settings)
-        if mina_target is None:
-            raise ValueError(
-                "detected mina structure enabled but no current package specified to build"
-            )
+    mina_target = _get_build_target(config_settings)
+    if mina_target is not None:
         if not _has_package(mina_target):
             raise ValueError(f"{mina_target} is not defined as a mina package")
         _patched_meta = _patch_pdm_metadata(mina_target)  # os.chdir may break behavior
@@ -234,12 +218,8 @@ def prepare_metadata_for_build_editable(
 ) -> str:
     """Prepare the metadata, places it in metadata_directory"""
     _patched_meta = None
-    if _using_mina_package_structure():
-        mina_target: Optional[str] = _get_build_target(config_settings)
-        if mina_target is None:
-            raise ValueError(
-                "detected mina structure enabled but no current package specified to build"
-            )
+    mina_target = _get_build_target(config_settings)
+    if mina_target is not None:
         if not _has_package(mina_target):
             raise ValueError(f"{mina_target} is not defined as a mina package")
         _patched_meta = _patch_pdm_metadata(mina_target)  # os.chdir may break behavior
@@ -256,12 +236,8 @@ def build_editable(
     metadata_directory: Optional[str] = None,
 ) -> str:
     _patched_meta = None
-    if _using_mina_package_structure():
-        mina_target: Optional[str] = _get_build_target(config_settings)
-        if mina_target is None:
-            raise ValueError(
-                "detected mina structure enabled but no current package specified to build"
-            )
+    mina_target = _get_build_target(config_settings)
+    if mina_target is not None:
         if not _has_package(mina_target):
             raise ValueError(f"{mina_target} is not defined as a mina package")
         _patched_meta = _patch_pdm_metadata(mina_target)  # os.chdir may break behavior

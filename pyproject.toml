@@ -27,7 +27,7 @@ dev = [
 
 
 [build-system]
-requires = ["mina-build>=0.2.5"]
+requires = ["mina-build>=0.2.6"]
 build-backend = "mina.backend"
 
 [project.entry-points.pdm]
@@ -49,7 +49,7 @@ raw-dependencies = []
 
 [tool.mina.packages."backend".project]
 name = "mina-build"
-version = "0.2.5"
+version = "0.2.6"
 description = "build backend for Mina Package Structure"
 authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},
@@ -72,10 +72,7 @@ excludes = [
 
 [tool.mina.packages."cli-pdm".project]
 name = "pdm-mina"
-version = "0.1.0"
-includes = [
-    "mina"
-]
+version = "0.1.2"
 dependencies = [
     "pdm",
     "mina-build",

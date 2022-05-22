@@ -14,8 +14,7 @@
 `Mina` provides a `PEP-517` implementation called [`mina-build`](https://pypi.org/project/mina-build/),
 It also provides a simple CLI implementation as the `PDM Plugin`;
 
-`mina-build` only works when `tool.mina.enabled` is set to `true` in `pyproject.toml`,
-Otherwise the behavior is the same as `pdm-pep517`.
+`mina-build` only works when the package to be packaged is defined, Otherwise the behavior is the same as `pdm-pep517`.
 
 The CLI does provide a `pdm mina build <package>` command,
 but you can also specify the package to be packaged via the environment variable `MINA_BUILD_TARGET` or by setting `--mina-target` in `config-setting`.
