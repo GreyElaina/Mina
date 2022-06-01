@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import argparse
 import shutil
-from argparse import Namespace
+import sys
 from pathlib import Path
 
+import tomli
 from pdm.builders.sdist import SdistBuilder
 from pdm.builders.wheel import WheelBuilder
-from pdm.cli.actions import do_build as do_build_pdm
 from pdm.cli.commands.base import BaseCommand
 from pdm.exceptions import ProjectError
 from pdm.project.core import Project
@@ -15,7 +15,7 @@ from pdm.project.core import Project
 
 def do_build_mina(
     project: Project,
-    package: str,
+    packages: list[str],
     option_sdist: bool = True,
     option_wheel: bool = True,
     option_dest: str = "dist",
@@ -32,31 +32,55 @@ def do_build_mina(
     if option_clean:
         shutil.rmtree(dest, ignore_errors=True)
     artifacts: list[str] = []
-    project.core.ui.echo(f"Building for package {package}...")
-    with project.core.ui.logging("Building packages"):
-        if option_sdist:
-            project.core.ui.echo("  - Building sdist")
-            loc = SdistBuilder(project.root, project.environment).build(
-                option_dest, config_settings
-            )
-            project.core.ui.echo(f"    - completed: {loc}")
-            artifacts.append(loc)
-        if option_wheel:
-            project.core.ui.echo("  - Building wheel")
-            loc = WheelBuilder(project.root, project.environment).build(
-                option_dest, config_settings
-            )
-            project.core.ui.echo(f"    - completed: {loc}")
-            artifacts.append(loc)
-    project.core.ui.echo(f"Build completed: {len(artifacts)} artifacts")
+    for package in packages:
+        settings = (config_settings or {}).copy()
+        settings.setdefault("--mina-target", package)
+        project.core.ui.echo(f"Building package {package}...")
+        with project.core.ui.logging("Building packages"):
+            if option_sdist:
+                project.core.ui.echo("  - Building sdist")
+                loc = SdistBuilder(project.root, project.environment).build(
+                    option_dest, settings
+                )
+                project.core.ui.echo(f"    - completed: {loc}")
+                artifacts.append(loc)
+            if option_wheel:
+                project.core.ui.echo("  - Building wheel")
+                loc = WheelBuilder(project.root, project.environment).build(
+                    option_dest, settings
+                )
+                project.core.ui.echo(f"    - completed: {loc}")
+                artifacts.append(loc)
+            project.core.ui.echo(f"{package} build completed.")
+    project.core.ui.echo(
+        f"Successfully built {len(packages)} packages: {len(artifacts)} artifacts"
+    )
     return artifacts
+
+
+class MinaCommandNamespace:
+    packages: list[str]
+    all: bool
+    sdist: bool
+    wheel: bool
+    dest: str
+    clean: bool
+    config_setting: list[str]
 
 
 class MinaBuildCommand(BaseCommand):
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            "package",
-            help="The package to build, which must be defined in pyproject.toml.",
+            "packages",
+            nargs="*",
+            help="Packages to build, which must be defined in pyproject.toml.",
+        )
+        parser.add_argument(
+            "-a",
+            "--all",
+            default=False,
+            action="store_true",
+            help="Build all packages.",
         )
         parser.add_argument(
             "--no-sdist",
@@ -86,26 +110,46 @@ class MinaBuildCommand(BaseCommand):
             "--config-setting",
             "-C",
             action="append",
+            default=[],
             help="Pass options to the backend. options with a value must be "
             'specified after "=": "--config-setting=--opt(=value)" '
             'or "-C--opt(=value)"',
         )
 
-    def handle(self, project: Project, options: Namespace):
-        package = options.package
-        config_settings = {"--mina-target": package}
-        if options.config_setting:
-            for item in options.config_setting:
-                name, _, value = item.partition("=")
-                if name not in config_settings:
-                    config_settings[name] = value
-                else:
-                    if not isinstance(config_settings[name], list):
-                        config_settings[name] = [config_settings[name]]
-                    config_settings[name].append(value)
+    def handle(self, project: Project, options: MinaCommandNamespace):
+        if not (project.root / "pyproject.toml").exists():
+            project.core.ui.echo("No pyproject.toml found.", err=True)
+            sys.exit(1)
+        pyproj = tomli.loads((project.root / "pyproject.toml").read_text())
+        mina_packages = pyproj.get("tool", {}).get("mina", {}).get("packages", [])
+        packages = options.packages
+
+        if options.all:
+            if packages:
+                raise ProjectError("Cannot specify packages and --all")
+            packages = mina_packages
+
+        if not packages:
+            raise ProjectError("No package specified")
+
+        errors: list[str] = [
+            package for package in packages if package not in mina_packages
+        ]
+        if errors:
+            raise ProjectError(f"Package(s) not found: {', '.join(errors)}")
+
+        config_settings = {}
+        for item in options.config_setting:
+            name, _, value = item.partition("=")
+            if name not in config_settings:
+                config_settings[name] = value
+            else:
+                if not isinstance(config_settings[name], list):
+                    config_settings[name] = [config_settings[name]]
+                config_settings[name].append(value)
         artifacts = do_build_mina(
             project,
-            package,
+            packages,
             options.sdist,
             options.wheel,
             options.dest,
