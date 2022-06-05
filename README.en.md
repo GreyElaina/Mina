@@ -27,16 +27,12 @@ Configure the following in the project `pyproject.toml`:
 [build-system]
 requires = ["mina-build>=0.2.5"]
 build-backend = "mina.backend"
-
-[tool.mina]
-enabled = true
 ```
 
 If you wish, you can have Mina use an override of the workspace configuration to get project spec when processing and injecting subpackage's `project` definitions; this feature is not enabled by default:
 
 ```toml
 [tool.mina]
-enabled = true
 override-global = true # Enable this feature globally
 
 [tool.mina.packages. "core"]

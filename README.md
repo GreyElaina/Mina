@@ -22,6 +22,18 @@ CLI 中虽提供了一个 `pdm mina build <package>` 指令,
 
 ## Quick Start
 
+### 安装 CLI
+
+目前, Mina 仅支持将 `pdm` 作为主要的用户功能入口, 但或许 `poetry` 会在之后得到支持?
+
+```bash
+elaina@localhost $ pip install pdm-mina
+# or pdm
+elaina@localhost $ pdm add pdm-mina -d
+```
+
+### 引入 mina-build
+
 在项目的 `pyproject.toml` 中配置以下项:
 
 ```toml
@@ -30,22 +42,7 @@ requires = ["mina-build>=0.2.5"]
 build-backend = "mina.backend"
 ```
 
-如果你希望, 你可以让 Mina 在处理和注入分包的 `project` 定义时, 使用覆盖工作区配置的形式来获得 Project Spec; 本特性默认不启用:
-
-```toml
-[tool.mina]
-enabled = true
-override-global = true  # 全局启用该特性
-
-[tool.mina.packages."core"]
-override = true  # 仅在 core 分包启用该特性
-```
-
-虽然 CLI 是可选的, 并且到现在还只支持 `pdm`, 但还是装上吧:
-
-```bash
-elaina@localhost $ pdm add pdm-mina
-```
+### 编辑 pyproject.toml
 
 假设你有如下的目录结构:
 
@@ -107,7 +104,26 @@ entry-points = {pdm = {mina = "mina.plugin:ensure_pdm"}}  # entry-points 的声�
 ```
 
 填入后, 你可以通过 CLI 的 `pdm mina list` 简单的检查, 或是直接 `pdm mina build <pkg>` 测试;
-这里推荐使用 `twine` + `keyring` 发布到 PyPI 上, 当然 `pdm-publish` 也是可以的.
+
+### 构建发布包
+
+使用 `pdm mina build <pkg>` 可以构建对应的分包.
+
+如果你希望, 你可以使用 `pdm mina build -a/--all` 一次性构建所有的分包.
+
+这里推荐使用 `twine` + `keyring` 发布到 PyPI 上, 当然 `pdm-publish`, 或是用 Github Actions 也是可以的.
+
+## 覆盖工作区配置
+
+如果你希望, 你可以让 Mina 在处理和注入分包的 `project` 定义时, 使用覆盖工作区配置的形式来获得 Project Spec; 本特性默认不启用:
+
+```toml
+[tool.mina]
+override-global = true  # 全局启用该特性
+
+[tool.mina.packages."core"]
+override = true  # 仅在 core 分包启用该特性
+```
 
 # 开源协议
 
