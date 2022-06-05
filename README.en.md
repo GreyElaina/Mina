@@ -21,6 +21,18 @@ but you can also specify the package to be packaged via the environment variable
 
 ## Quick Start
 
+### Installing the CLI
+
+At the moment, Mina only supports `pdm` as the main user function entry, but perhaps `poetry` will be supported later?
+
+```bash
+elaina@localhost $ pip install pdm-mina
+# or pdm
+elaina@localhost $ pdm add pdm-mina -d
+```
+
+### Introduce mina-build
+
 Configure the following in the project `pyproject.toml`:
 
 ```toml
@@ -29,21 +41,7 @@ requires = ["mina-build>=0.2.5"]
 build-backend = "mina.backend"
 ```
 
-If you wish, you can have Mina use an override of the workspace configuration to get project spec when processing and injecting subpackage's `project` definitions; this feature is not enabled by default:
-
-```toml
-[tool.mina]
-override-global = true # Enable this feature globally
-
-[tool.mina.packages. "core"]
-override = true # Enable this feature only in core subpackages
-```
-
-Although the CLI is optional, and only `pdm` is supported so far, it's a good idea to install it:
-
-```bash
-elaina@localhost $ pdm add pdm-mina
-```
+### Edit pyproject.toml
 
 Suppose you have the following directory structure:
 
@@ -79,7 +77,7 @@ Here we take the example of the configuration subpackage `core`.
 includes = [
     "avilla/core"
 ]
-# Equivalent to tool.pdm.includes, I don't know what happens if you leave it out, it's probably just follow the default behaviour - packing the module that name refers to.
+# Equivalent to tool.pdm.includes, I don't know what happens if you leave it out, it's probably just the normal case - packing the module that name refers to.
 
 # raw-dependencies = [...]
 # This configuration item will be queued directly into the dependency declaration after project.dependencies has been processed.
@@ -94,20 +92,38 @@ authors = ["..."]
 version = "0.1.0" # version, not guaranteed to support dynamic fetching (as I haven't used it or tried it)
 requires-python = ">=3.9"
 dependencies = [ # Suggest filling in
-    "aiohttp", # Although the `PEP-518` specification is used here, all packages will be redirected to the same name in project.dependencies.
+    "aiohttp", # Although the `PEP-508` specification is used here, all packages will be redirected to the same name in project.dependencies.
     "starlette",
     "pydantic"
-]
+optional-dependencies]
 optional-dependencies = {
     "amnesia": ["graia-amnesia"] # example of optional dependencies
 }
-entry-points = {pdm = {mina = "mina.plugin:ensure_pdm"}} # entry-points declaration method, a table may be better.
+entry-points = {pdm = {mina = "mina.plugin:ensure_pdm"}} # entry-points declaration method
 ```
 
-Once filled in, you can simply check it with the CLI's `pdm mina list`, or test it directly with `pdm mina build <pkg>`;
-It is recommended to use `twine` + `keyring` to publish to PyPI, but `pdm-publish` is also possible.
+Once filled in, you can simply check it via the CLI's `pdm mina list`, or test it directly with `pdm mina build <pkg>`;
 
-# Open Source License
+### Building a release package
 
-This project is open source under MIT.
+Use `pdm mina build <pkg>` to build the corresponding sub-packages.
 
+If you wish, you can use `pdm mina build -a/--all` to build all the subpackages at once.
+
+It is recommended to use `twine` + `keyring` to publish to PyPI, but of course `pdm-publish`, or use Github Actions is also possible.
+
+## Overriding the workspace configuration
+
+If you wish, you can have Mina use an override workspace configuration to get the Project Spec when processing and injecting subpackaged `project` definitions; this feature is not enabled by default:
+
+```toml
+[tool.mina]
+override-global = true # Enable this feature globally
+
+[tool.mina.packages. "core"]
+override = true # Enable this feature only in core subpackages
+```
+
+# Open source license
+
+This project is open source using the MIT.
