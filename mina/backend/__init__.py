@@ -13,6 +13,7 @@ from pdm.pep517.api import get_requires_for_build_wheel as get_requires_for_buil
 from pdm.pep517.api import (
     prepare_metadata_for_build_wheel as prepare_metadata_for_build_wheel,
 )
+from pdm.pep517.base import Builder
 from pdm.pep517.editable import EditableBuilder
 from pdm.pep517.metadata import Metadata
 from pdm.pep517.sdist import SdistBuilder
@@ -113,7 +114,7 @@ def _patch_dep(_meta: Metadata, pkg_project: dict[str, Any]):
 
 def _patch_pdm_metadata(package: str):
     cwd = Path.cwd()
-    _meta = Metadata(cwd / "pyproject.toml")
+    _meta = Builder(cwd).meta
 
     config = tomli.loads((cwd / "pyproject.toml").read_text())
 
@@ -144,6 +145,9 @@ def _patch_pdm_metadata(package: str):
 
     if "entry-points" in package_conf:
         pdm_settings["entry-points"] = package_conf["entry-points"]
+
+    if "build" in package_conf:
+        pdm_settings["build"] = package_conf["build"]
 
     if "raw-dependencies" in package_conf and _meta.dependencies is not None:
         _meta.dependencies.extend(package_conf["raw-dependencies"])
