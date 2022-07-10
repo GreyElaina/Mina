@@ -6,8 +6,8 @@ authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},
 ]
 dependencies = [
-    "pdm>=1.14.1",
-    "pdm-pep517>=0.12.3",
+    "pdm>=2.0.0b1",
+    "pdm-pep517>=1.0.1",
     "mina-build>=0.2.1",
     "twine>=4.0.0",
 ]
@@ -49,7 +49,7 @@ raw-dependencies = []
 
 [tool.mina.packages."backend".project]
 name = "mina-build"
-version = "0.2.6"
+version = "0.2.8"
 description = "build backend for Mina Package Structure"
 authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},

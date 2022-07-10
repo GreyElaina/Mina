@@ -15,7 +15,7 @@ from pdm.pep517.api import (
 )
 from pdm.pep517.base import Builder
 from pdm.pep517.editable import EditableBuilder
-from pdm.pep517.metadata import Metadata
+from pdm.pep517.metadata import Config, Metadata
 from pdm.pep517.sdist import SdistBuilder
 from pdm.pep517.wheel import WheelBuilder
 
@@ -154,11 +154,11 @@ def _patch_pdm_metadata(package: str):
 
     if _using_override(package):
         project_conf = config.get("project", {})
-        _meta._metadata = dict(project_conf, **package_project)
+        _meta.data = dict(project_conf, **package_project)
     else:
-        _meta._metadata = package_project
+        _meta.data = package_project
 
-    _meta._tool_settings = pdm_settings
+    _meta.config = Config(_meta.root, pdm_settings)
     _meta.validate(True)
 
     return _meta
