@@ -132,10 +132,9 @@ class MinaBuildCommand(BaseCommand):
         if not packages:
             raise ProjectError("No package specified")
 
-        errors: list[str] = [
+        if errors := [
             package for package in packages if package not in mina_packages
-        ]
-        if errors:
+        ]:
             raise ProjectError(f"Package(s) not found: {', '.join(errors)}")
 
         config_settings = {}
