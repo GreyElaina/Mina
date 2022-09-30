@@ -120,7 +120,7 @@ class MinaBuildCommand(BaseCommand):
         if not (project.root / "pyproject.toml").exists():
             project.core.ui.echo("No pyproject.toml found.", err=True)
             sys.exit(1)
-        pyproj = tomli.loads((project.root / "pyproject.toml").read_text())
+        pyproj = tomli.loads((project.root / "pyproject.toml").read_text(encoding='utf-8'))
         mina_packages = pyproj.get("tool", {}).get("mina", {}).get("packages", [])
         packages = options.packages
 

@@ -23,7 +23,7 @@ from pdm.pep517.wheel import WheelBuilder
 @functools.lru_cache(None)
 def _get_config_root():
     cwd = Path.cwd()
-    return tomli.loads((cwd / "pyproject.toml").read_text())
+    return tomli.loads((cwd / "pyproject.toml").read_text(encoding='utf-8'))
 
 
 @functools.lru_cache(None)
@@ -116,7 +116,7 @@ def _patch_pdm_metadata(package: str):
     cwd = Path.cwd()
     _meta = Builder(cwd).meta
 
-    config = tomli.loads((cwd / "pyproject.toml").read_text())
+    config = tomli.loads((cwd / "pyproject.toml").read_text(encoding='utf-8'))
 
     package_conf = (
         config.get("tool", {}).get("mina", {}).get("packages", {}).get(package, None)
