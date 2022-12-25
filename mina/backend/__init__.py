@@ -5,14 +5,22 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
-from pdm.pep517._vendor import tomli
+try:
+    import tomllib as tomli  # type: ignore
+except ImportError:
+    try:
+        from pdm.pep517._vendor import tomli
+    except ImportError:
+        import tomli
+
 from pdm.pep517._vendor.packaging.requirements import Requirement
 from pdm.pep517.api import _prepare_metadata
-from pdm.pep517.api import get_requires_for_build_sdist as get_requires_for_build_sdist
-from pdm.pep517.api import get_requires_for_build_wheel as get_requires_for_build_wheel
-from pdm.pep517.api import (
-    prepare_metadata_for_build_wheel as prepare_metadata_for_build_wheel,
-)
+from pdm.pep517.api import \
+    get_requires_for_build_sdist as get_requires_for_build_sdist
+from pdm.pep517.api import \
+    get_requires_for_build_wheel as get_requires_for_build_wheel
+from pdm.pep517.api import \
+    prepare_metadata_for_build_wheel as prepare_metadata_for_build_wheel
 from pdm.pep517.base import Builder
 from pdm.pep517.editable import EditableBuilder
 from pdm.pep517.metadata import Config, Metadata
@@ -23,7 +31,7 @@ from pdm.pep517.wheel import WheelBuilder
 @functools.lru_cache(None)
 def _get_config_root():
     cwd = Path.cwd()
-    return tomli.loads((cwd / "pyproject.toml").read_text(encoding='utf-8'))
+    return tomli.loads((cwd / "pyproject.toml").read_text(encoding="utf-8"))
 
 
 @functools.lru_cache(None)
@@ -103,7 +111,9 @@ def _patch_dep(_meta: Metadata, pkg_project: dict[str, Any]):
                 if req.name is None:
                     raise ValueError(f"'{dep}' is not a valid requirement")
                 if req.name not in workspace_deps:
-                    raise ValueError(f"{req.name} is not defined in project requirements")
+                    raise ValueError(
+                        f"{req.name} is not defined in project requirements"
+                    )
                 group_deps.append(str(workspace_deps[req.name]))
             optional_dependencies[group] = group_deps
 
@@ -116,7 +126,7 @@ def _patch_pdm_metadata(package: str):
     cwd = Path.cwd()
     _meta = Builder(cwd).meta
 
-    config = tomli.loads((cwd / "pyproject.toml").read_text(encoding='utf-8'))
+    config = tomli.loads((cwd / "pyproject.toml").read_text(encoding="utf-8"))
 
     package_conf = (
         config.get("tool", {}).get("mina", {}).get("packages", {}).get(package, None)

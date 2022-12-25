@@ -10,6 +10,7 @@ dependencies = [
     "pdm-pep517>=1.0.1",
     "mina-build>=0.2.1",
     "twine>=4.0.0",
+    "tomli>=1.1.0; python_version < \"3.11\""
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -49,13 +50,14 @@ raw-dependencies = []
 
 [tool.mina.packages."backend".project]
 name = "mina-build"
-version = "0.2.8"
+version = "0.2.9"
 description = "build backend for Mina Package Structure"
 authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},
 ]
 dependencies = [
     "pdm-pep517",
+    "tomli"
 ]
 requires-python = ">=3.9"
 readme = "README.build.md"
@@ -72,10 +74,11 @@ excludes = [
 
 [tool.mina.packages."cli-pdm".project]
 name = "pdm-mina"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
     "pdm",
     "mina-build",
+    "tomli"
 ]
 requires-python = ">=3.9"
 readme = "README.md"
