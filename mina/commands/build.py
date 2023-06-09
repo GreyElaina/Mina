@@ -9,7 +9,7 @@ try:
     import tomllib as tomli  # type: ignore
 except ImportError:
     try:
-        from pdm.pep517._vendor import tomli
+        from pdm.backend._vendor import tomli
     except ImportError:
         import tomli
 from pdm.builders.sdist import SdistBuilder
