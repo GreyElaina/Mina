@@ -21,10 +21,7 @@ from pdm.backend import \
 from pdm.backend import \
     prepare_metadata_for_build_wheel as prepare_metadata_for_build_wheel
 from pdm.backend.base import Builder
-from pdm.backend.editable import EditableBuilder
-from pdm.backend.config import Config as RootConfig, Metadata as ProjMeta, BuildConfig
-from pdm.backend.sdist import SdistBuilder
-from pdm.backend.wheel import WheelBuilder
+from pdm.backend.config import Metadata, BuildConfig
 
 
 @functools.lru_cache(None)
@@ -81,7 +78,9 @@ def _patch_dep(pkg_project: dict[str, Any]):
         optional_deps: list[str] = pkg_project["dependencies"]
         workspace_deps_origin: list[str] = _get_root_project().get("dependencies", [])
         workspace_deps_convert = [Requirement(i) for i in workspace_deps_origin]
-        workspace_deps_map = {i.name: i for i in workspace_deps_convert if i.name is not None}
+        workspace_deps_map = {
+            i.name: i for i in workspace_deps_convert if i.name is not None
+        }
 
         for dep in optional_deps:
             req = Requirement(dep)
@@ -101,7 +100,9 @@ def _patch_dep(pkg_project: dict[str, Any]):
         # workspace don't use optional dep: it must contains ALL deps mina required.
         workspace_deps_origin: list[str] = _get_root_project().get("dependencies", [])
         workspace_deps_convert = [Requirement(i) for i in workspace_deps_origin]
-        workspace_deps_map = {i.name: i for i in workspace_deps_convert if i.name is not None}
+        workspace_deps_map = {
+            i.name: i for i in workspace_deps_convert if i.name is not None
+        }
 
         for group, optional_deps in deps.items():
             group_deps = []
@@ -124,7 +125,10 @@ def _patch_pdm_config(package: str):
     config = Builder(cwd).config
 
     package_conf = (
-        config.data.get("tool", {}).get("mina", {}).get("packages", {}).get(package, None)
+        config.data.get("tool", {})
+        .get("mina", {})
+        .get("packages", {})
+        .get(package, None)
     )
     if package_conf is None:
         raise ValueError(f"No package named '{package}'")
@@ -172,21 +176,29 @@ def _patch_pdm_config(package: str):
             package_project["entry-points"][group].update(entry_points)
 
     if "scripts" in package_conf:
-        package_project.setdefault("entry-points", {})["console_scripts"] = package_conf["scripts"]
+        package_project.setdefault("entry-points", {})[
+            "console_scripts"
+        ] = package_conf["scripts"]
     if "gui-scripts" in package_conf:
-        package_project.setdefault("entry-points", {})["gui_scripts"] = package_conf["gui-scripts"]
+        package_project.setdefault("entry-points", {})["gui_scripts"] = package_conf[
+            "gui-scripts"
+        ]
 
-    if "raw-dependencies" in package_conf and config.metadata.get("dependencies") is not None:
-        config.data['project']["dependencies"].extend(package_conf["raw-dependencies"])
+    if (
+        "raw-dependencies" in package_conf
+        and config.metadata.get("dependencies") is not None
+    ):
+        config.data["project"]["dependencies"].extend(package_conf["raw-dependencies"])
 
     if _using_override(package):
         project_conf = config.data["project"]
-        config.data['project'] = dict(project_conf, **package_project)
+        config.data["project"] = dict(project_conf, **package_project)
     else:
-        config.data['project'] = package_project
+        config.data["project"] = package_project
 
     config.data["tool"].setdefault("pdm", {})["build"] = pdm_settings
     config.validate(config.data, config.root)
+    config.metadata = Metadata(config.data["project"])
     config.build_config = BuildConfig(config.root, pdm_settings)
     return config
 
@@ -195,6 +207,8 @@ def prepare_metadata_for_build_wheel(
     metadata_directory: str, config_settings: Optional[Mapping[str, Any]] = None
 ) -> str:
     """Prepare the metadata, places it in metadata_directory"""
+    from pdm.backend.wheel import WheelBuilder
+
     _patched_config = None
     mina_target = _get_build_target(config_settings)
     if mina_target is not None:
@@ -213,12 +227,15 @@ def build_wheel(
     metadata_directory: Optional[str] = None,
 ) -> str:
     """Builds a wheel, places it in wheel_directory"""
+    from pdm.backend.wheel import WheelBuilder
+
     _patched_config = None
     mina_target = _get_build_target(config_settings)
     if mina_target is not None:
         if not _has_package(mina_target):
             raise ValueError(f"{mina_target} is not defined as a mina package")
         _patched_config = _patch_pdm_config(mina_target)  # os.chdir may break behavior
+
     with WheelBuilder(Path.cwd(), config_settings) as builder:
         if _patched_config is not None:
             builder.config = _patched_config
@@ -231,6 +248,8 @@ def build_sdist(
     sdist_directory: str, config_settings: Optional[Mapping[str, Any]] = None
 ) -> str:
     """Builds an sdist, places it in sdist_directory"""
+    from pdm.backend.sdist import SdistBuilder
+
     _patched_config = None
     mina_target = _get_build_target(config_settings)
     if mina_target is not None:
@@ -250,6 +269,8 @@ def prepare_metadata_for_build_editable(
     metadata_directory: str, config_settings: Optional[Mapping[str, Any]] = None
 ) -> str:
     """Prepare the metadata, places it in metadata_directory"""
+    from pdm.backend.editable import EditableBuilder
+
     _patched_config = None
     mina_target = _get_build_target(config_settings)
     if mina_target is not None:
@@ -267,6 +288,8 @@ def build_editable(
     config_settings: Optional[Mapping[str, Any]] = None,
     metadata_directory: Optional[str] = None,
 ) -> str:
+    from pdm.backend.editable import EditableBuilder
+
     _patched_config = None
     mina_target = _get_build_target(config_settings)
     if mina_target is not None:
