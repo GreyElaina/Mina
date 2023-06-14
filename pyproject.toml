@@ -6,17 +6,15 @@ authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},
 ]
 dependencies = [
-    "pdm>=2.0.0b1",
-    "pdm-pep517>=1.0.1",
+    "pdm>=2.5.0",
     "mina-build>=0.2.1",
     "twine>=4.0.0",
-    "tomli>=1.1.0; python_version < \"3.11\""
+    "tomli>=1.1.0; python_version < \"3.11\"",
+    "pdm-backend>=2.1.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
 license = {text = "MIT"}
-
-[project.optional-dependencies]
 
 [tool.pdm]
 [tool.pdm.dev-dependencies]
@@ -50,13 +48,13 @@ raw-dependencies = []
 
 [tool.mina.packages."backend".project]
 name = "mina-build"
-version = "0.2.9"
+version = "0.3.0"
 description = "build backend for Mina Package Structure"
 authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},
 ]
 dependencies = [
-    "pdm-pep517",
+    "pdm-backend",
     "tomli"
 ]
 requires-python = ">=3.9"

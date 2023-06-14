@@ -2,19 +2,19 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-`Mina` is a "modular subpackaging" implementation based on `pdm-pep517`.
+`Mina` is a "modular subpackaging" implementation based on `pdm-backend`.
 
 `Mina` is also an implementation of the `Mina Package Structure`, which is a unique specification with the following features:
 
  - The entire project is treated as a workspace environment, and the dependency tree used by all subpackages is managed uniformly through existing facilities;
  - Subpackages declare their own information and dependencies referenced in the workspace;
- - Patching the `Metadata` read by the `pdm-pep517` build release to reuse its build process;
+ - Patching the `Metadata` read by the `pdm-backend` build release to reuse its build process;
  - Avoids some potential problems by providing a complete `build backend` for `PEP-517`.
 
 `Mina` provides a `PEP-517` implementation called [`mina-build`](https://pypi.org/project/mina-build/),
 It also provides a simple CLI implementation as the `PDM Plugin`;
 
-`mina-build` only works when the package to be packaged is defined, Otherwise the behavior is the same as `pdm-pep517`.
+`mina-build` only works when the package to be packaged is defined, Otherwise the behavior is the same as `pdm-backend`.
 
 The CLI does provide a `pdm mina build <package>` command,
 but you can also specify the package to be packaged via the environment variable `MINA_BUILD_TARGET` or by setting `--mina-target` in `config-setting`.

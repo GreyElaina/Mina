@@ -2,20 +2,20 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-`Mina` 是基于 `pdm-pep517` 的 "模块分包" 实现.
+`Mina` 是基于 `pdm-backend` 的 "模块分包" 实现.
 
 `Mina` 同样也是 `Mina Package Structure` 的实现, 作为一门独特的规范, 其具有以下特性:
 
  - 将整个项目作为工作区环境, 通过现有的设施统一管理所有分包使用的依赖树;
  - 分包各自声明自己的信息和工作区中引用的依赖;
- - 对 `pdm-pep517` 构建发布时所读取的 `Metadata` 进行修补以复用其构建流程;
+ - 对 `pdm-backend` 构建发布时所读取的 `Metadata` 进行修补以复用其构建流程;
  - 通过提供完整的 `PEP-517` 构建后端 (`build backend`), 避免了一些潜在的问题.
 
 `Mina` 提供了名为 [`mina-build`](https://pypi.org/project/mina-build/) 的 `PEP-517` 实现,
 同时还提供作为 `PDM Plugin` 的简易 CLI 实现;
 
 `mina-build` 仅在配置了需要构建的分包名称时才会注入 `pdm-pep517` 的构建流程,
-其他情况下的行为与 `pdm-pep517` 无异.
+其他情况下的行为与 `pdm-backend` 无异.
 
 CLI 中虽提供了一个 `pdm mina build <package>` 指令,
 但你也可以通过环境变量 `MINA_BUILD_TARGET` 或是 `config-setting` 中设置 `--mina-target` 指定需要打包的分包.
