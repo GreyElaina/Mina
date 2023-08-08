@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import os
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional, cast
 
 try:
     import tomllib as tomli  # type: ignore
@@ -11,15 +11,13 @@ except ImportError:
     try:
         from pdm.backend._vendor import tomli
     except ImportError:
-        import tomli
+        import tomli  # type: ignore
 
 from pdm.backend._vendor.packaging.requirements import Requirement
 from pdm.backend import \
     get_requires_for_build_sdist as get_requires_for_build_sdist
 from pdm.backend import \
     get_requires_for_build_wheel as get_requires_for_build_wheel
-from pdm.backend import \
-    prepare_metadata_for_build_wheel as prepare_metadata_for_build_wheel
 from pdm.backend.base import Builder
 from pdm.backend.config import Metadata, BuildConfig
 
@@ -38,7 +36,7 @@ def _get_root_project():
 @functools.lru_cache(None)
 def _get_tool_mina() -> dict[str, Any]:
     return _get_config_root().get("tool", {}).get("mina", {})
-
+   
 
 @functools.lru_cache(None)
 def _get_package(package: str) -> Dict[str, Any]:
@@ -73,29 +71,29 @@ def _using_override(package: str | None) -> bool:
 
 def _patch_dep(pkg_project: dict[str, Any]):
     if "dependencies" in pkg_project:
-        optional_dependencies: list[str] = []
+        dependencies: list[str] = []
 
-        optional_deps: list[str] = pkg_project["dependencies"]
+        deps = cast(list[str], pkg_project["dependencies"])
         workspace_deps_origin: list[str] = _get_root_project().get("dependencies", [])
         workspace_deps_convert = [Requirement(i) for i in workspace_deps_origin]
         workspace_deps_map = {
             i.name: i for i in workspace_deps_convert if i.name is not None
         }
 
-        for dep in optional_deps:
+        for dep in deps:
             req = Requirement(dep)
             if req.name is None:
                 raise ValueError(f"'{dep}' is not a valid requirement")
             if req.name not in workspace_deps_map:
                 raise ValueError(f"{req.name} is not defined in project requirements")
-            optional_dependencies.append(str(workspace_deps_map[req.name]))
+            dependencies.append(str(workspace_deps_map[req.name]))
 
-        pkg_project["dependencies"] = optional_dependencies
+        pkg_project["dependencies"] = dependencies
 
     if "optional-dependencies" in pkg_project:
         optional_dependencies: dict[str, list[str]] = {}
 
-        deps: dict[str, list[str]] = pkg_project["optional-dependencies"]
+        optional_dep_groups: dict[str, list[str]] = pkg_project["optional-dependencies"]
 
         # workspace don't use optional dep: it must contains ALL deps mina required.
         workspace_deps_origin: list[str] = _get_root_project().get("dependencies", [])
@@ -104,7 +102,7 @@ def _patch_dep(pkg_project: dict[str, Any]):
             i.name: i for i in workspace_deps_convert if i.name is not None
         }
 
-        for group, optional_deps in deps.items():
+        for group, optional_deps in optional_dep_groups.items():
             group_deps = []
             for dep in optional_deps:
                 req = Requirement(dep)
@@ -120,18 +118,33 @@ def _patch_dep(pkg_project: dict[str, Any]):
         pkg_project["optional-dependencies"] = optional_dependencies
 
 
+def _get_standalone_config(pkg: str):
+    config_file = Path.cwd() / ".mina" / f"{pkg}.toml"
+    if not config_file.exists():
+        return
+    
+    return tomli.loads(config_file.read_text())
+
+
 def _patch_pdm_config(package: str):
     cwd = Path.cwd()
     config = Builder(cwd).config
 
-    package_conf = (
-        config.data.get("tool", {})
-        .get("mina", {})
-        .get("packages", {})
-        .get(package, None)
-    )
-    if package_conf is None:
-        raise ValueError(f"No package named '{package}'")
+    package_conf = _get_standalone_config(package)
+    if package_conf is not None:
+        package_conf.setdefault("includes", []).append(
+            str(Path.cwd() / ".mina" / f"{package}.toml")
+        )
+    else:
+        package_conf = (
+            config.data.get("tool", {})
+            .get("mina", {})
+            .get("packages", {})
+            .get(package, None)
+        )
+        if package_conf is None:
+            raise ValueError(f"No package named '{package}'")
+
     package_project = package_conf.get("project", {})
 
     _patch_dep(package_project)
