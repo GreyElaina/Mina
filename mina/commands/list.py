@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 from argparse import Namespace
 
 try:
@@ -21,6 +22,11 @@ class MinaPackagesListCommand(BaseCommand):
             (project.root / "pyproject.toml").read_text(encoding="utf-8")
         )
         mina_packages = pyproj.get("tool", {}).get("mina", {}).get("packages", [])
+        for i in project.root.glob(".mina/*.toml"):
+            name = i.name[:-5]
+            if name not in mina_packages:
+                mina_packages.append(name)
+                
         if not mina_packages:
             project.core.ui.echo(
                 "No mina packages found, you could add some in pyproject.toml."

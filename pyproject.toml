@@ -74,7 +74,7 @@ excludes = [
 
 [tool.mina.packages."cli-pdm".project]
 name = "pdm-mina"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
     "pdm",
     "mina-build",
