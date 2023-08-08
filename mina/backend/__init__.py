@@ -132,9 +132,7 @@ def _patch_pdm_config(package: str):
 
     package_conf = _get_standalone_config(package)
     if package_conf is not None:
-        package_conf.setdefault("includes", []).append(
-            str(Path.cwd() / ".mina" / f"{package}.toml")
-        )
+        package_conf.setdefault("includes", []).append(f".mina/{package}.toml")
     else:
         package_conf = (
             config.data.get("tool", {})
