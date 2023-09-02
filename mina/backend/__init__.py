@@ -188,11 +188,21 @@ def _patch_pdm_config(package: str):
         "raw-dependencies" in package_conf
         and config.metadata.get("dependencies") is not None
     ):
-        config.data["project"]["dependencies"].extend(package_conf["raw-dependencies"])
-
+        package_project["dependencies"].extend(package_conf["raw-dependencies"])
     if _using_override(package):
         project_conf = config.data["project"]
-        config.data["project"] = dict(project_conf, **package_project)
+
+        def merge(source: dict, target: dict):
+            for key, value in target.items():
+                if key in source and isinstance(value, list):
+                        source[key].extend(value)
+                elif key in source and isinstance(value, dict):
+                    merge(source[key], value)
+                else:
+                    source[key] = value
+            return source
+
+        config.data["project"] = merge(project_conf, package_project)
     else:
         config.data["project"] = package_project
 
