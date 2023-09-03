@@ -15,6 +15,12 @@ except ImportError:
 from pdm.builders.sdist import SdistBuilder
 from pdm.builders.wheel import WheelBuilder
 from pdm.cli.commands.base import BaseCommand
+from pdm.cli.options import (
+    no_isolation_option,
+    project_option,
+    skip_option,
+    verbose_option,
+)
 from pdm.exceptions import ProjectError
 from pdm.project.core import Project
 
@@ -75,6 +81,8 @@ class MinaCommandNamespace:
 
 
 class MinaBuildCommand(BaseCommand):
+    arguments = (verbose_option, project_option, no_isolation_option, skip_option)
+
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "packages",
