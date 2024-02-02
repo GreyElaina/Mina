@@ -17,7 +17,7 @@ It also provides a simple CLI implementation as the `PDM Plugin`;
 `mina-build` only works when the package to be packaged is defined, Otherwise the behavior is the same as `pdm-backend`.
 
 The CLI does provide a `pdm mina build <package>` command,
-but you can also specify the package to be packaged via the environment variable `MINA_BUILD_TARGET` or by setting `--mina-target` in `config-setting`.
+but you can also specify the package to be packaged via the environment variable `MINA_BUILD_TARGET` or by setting `mina-target` in `config-setting`.
 
 ## Quick Start
 
@@ -26,10 +26,25 @@ but you can also specify the package to be packaged via the environment variable
 At the moment, Mina only supports `pdm` as the main user function entry, but perhaps `poetry` will be supported later?
 
 ```bash
-elaina@localhost $ pip install pdm-mina
+elaina@localhost $ pipx inject pdm pdm-mina
 # or pdm
-elaina@localhost $ pdm add pdm-mina -d
+elaina@localhost $ pdm self add pdm-mina
 ```
+
+Or specify in `pyproject.toml`:
+
+```toml
+[tool.pdm]
+plugins = ["pdm-mina"]
+```
+
+Then run:
+
+```bash
+elaina@localhost $ pdm install --plugins
+```
+
+This will enable `pdm-mina` plugin in the current project.
 
 ### Introduce mina-build
 
@@ -38,7 +53,7 @@ Configure the following in the project `pyproject.toml`:
 ```toml
 [build-system]
 requires = ["mina-build>=0.2.5"]
-build-backend = "mina.backend"
+build-backend = "pdm.backend"
 ```
 
 ### Edit pyproject.toml
@@ -79,13 +94,9 @@ includes = [
 ]
 # Equivalent to tool.pdm.includes, I don't know what happens if you leave it out, it's probably just the normal case - packing the module that name refers to.
 
-# raw-dependencies = [...]
-# This configuration item will be queued directly into the dependency declaration after project.dependencies has been processed.
-# You can use this feature to declare dependencies between subpackages.
-
 # override = false
 
-[tool.mina.packages. "core".project]
+[tool.mina.packages."core".project]
 name = "avilla-core" # the name of the subpackage on `pypi`, required
 description = "..."
 authors = ["..."]

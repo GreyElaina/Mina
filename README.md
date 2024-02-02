@@ -14,23 +14,38 @@
 `Mina` 提供了名为 [`mina-build`](https://pypi.org/project/mina-build/) 的 `PEP-517` 实现,
 同时还提供作为 `PDM Plugin` 的简易 CLI 实现;
 
-`mina-build` 仅在配置了需要构建的分包名称时才会注入 `pdm-pep517` 的构建流程,
+`mina-build` 仅在配置了需要构建的分包名称时才会注入 `pdm-backend` 的构建流程,
 其他情况下的行为与 `pdm-backend` 无异.
 
 CLI 中虽提供了一个 `pdm mina build <package>` 指令,
-但你也可以通过环境变量 `MINA_BUILD_TARGET` 或是 `config-setting` 中设置 `--mina-target` 指定需要打包的分包.
+但你也可以通过环境变量 `MINA_BUILD_TARGET` 或是 `config-setting` 中设置 `mina-target` 指定需要打包的分包.
 
 ## Quick Start
 
-### 安装 CLI
+### 安装插件
 
 目前, Mina 仅支持将 `pdm` 作为主要的用户功能入口, 但或许 `poetry` 会在之后得到支持?
 
 ```bash
-elaina@localhost $ pip install pdm-mina
+elaina@localhost $ pipx inject pdm pdm-mina
 # or pdm
-elaina@localhost $ pdm add pdm-mina -d
+elaina@localhost $ pdm self add pdm-mina
 ```
+
+或者在 `pyproject.toml` 指定：
+
+```toml
+[tool.pdm]
+plugins = ["pdm-mina"]
+```
+
+然后运行：
+
+```bash
+elaina@localhost $ pdm install --plugins
+```
+
+运行成功后将在当前项目中启用 `pdm-mina` 插件。
 
 ### 引入 mina-build
 
@@ -39,7 +54,7 @@ elaina@localhost $ pdm add pdm-mina -d
 ```toml
 [build-system]
 requires = ["mina-build>=0.2.5"]
-build-backend = "mina.backend"
+build-backend = "pdm.backend"
 ```
 
 ### 编辑 pyproject.toml
@@ -79,10 +94,6 @@ includes = [
     "avilla/core"
 ]
 # 相当于 tool.pdm.includes, 如果不填我不知道会发生什么, 可能就是普通的情况 -- 打包 name 所指向的模块.
-
-# raw-dependencies = [...]
-#    这一配置项会在处理完 project.dependencies 后直接排入依赖声明.
-#    你可以用这个特性来声明分包之间的依赖.
 
 # override = false
 

@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 from argparse import ArgumentParser, Namespace
 from typing import TYPE_CHECKING
 
 from pdm.cli.commands.base import BaseCommand
-from pdm.project.core import Project
 
 from mina.commands.build import MinaBuildCommand
 from mina.commands.list import MinaPackagesListCommand
 
 if TYPE_CHECKING:
     from pdm.core import Core
+    from pdm.project.core import Project
 
 
 class MinaCommand(BaseCommand):
@@ -24,5 +26,5 @@ class MinaCommand(BaseCommand):
         self.parser.print_help()
 
 
-def ensure_pdm(core: "Core"):
+def ensure_pdm(core: Core) -> None:
     core.register_command(MinaCommand, "mina")

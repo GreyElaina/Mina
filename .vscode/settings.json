@@ -1,8 +1,0 @@
-{
-    "cSpell.words": [
-        "mina",
-        "tomli",
-        "deps"
-    ],
-    "python.formatting.provider": "black"
-}
