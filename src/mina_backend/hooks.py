@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import os
 import sys
 from pathlib import Path
@@ -15,17 +14,6 @@ if sys.version_info >= (3, 11):
     import tomllib as tomli
 else:
     from pdm.backend._vendor import tomli
-
-
-@functools.lru_cache(None)
-def _get_config_root():
-    cwd = Path.cwd()
-    return tomli.loads((cwd / "pyproject.toml").read_text(encoding="utf-8"))
-
-
-@functools.lru_cache(None)
-def _get_root_project():
-    return _get_config_root().get("project", {})
 
 
 def _get_build_target(context: Context) -> str | None:
@@ -109,8 +97,6 @@ def _update_config(config: Config, package: str) -> None:
     else:
         deep_merge(config.metadata, package_metadata)
 
-    print(">>>>>>>", config.data["project"])
-    print("<<<<<<<", config.metadata._Table__data)
     config.validate(config.data, config.root)
 
 
