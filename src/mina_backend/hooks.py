@@ -31,34 +31,30 @@ def _using_override(config: Config, package_conf: dict[str, Any]) -> bool:
     return config.data.get("tool", {}).get("mina", {}).get("override-global", False)
 
 
-def _patch_dep(
-    config: Config, pkg_project: dict[str, Any], using_override: bool = False
-) -> None:
-    if "dependencies" in pkg_project:
-        deps = cast(list[str], pkg_project["dependencies"])
+def _add_workspace_deps(config: Config, pkg_project: dict[str, Any]) -> None:
+    workspace_deps = config.metadata.get("dependencies", [])
+    if workspace_deps:
+        deps = cast(list[str], pkg_project.setdefault("dependencies", []))
         deps_map = {canonicalize_name(Requirement(i).name): i for i in deps}
-        workspace_deps = config.metadata.get("dependencies", [])
-        if not using_override:
-            for dep in workspace_deps:
-                req = Requirement(dep)
-                if canonicalize_name(req.name) not in deps_map:
+        for dep in workspace_deps:
+            if canonicalize_name(Requirement(dep).name) not in deps_map:
+                deps.append(dep)
+
+    workspace_dep_groups: dict[str, list[str]] = config.metadata.get(
+        "optional-dependencies", {}
+    )
+    if workspace_dep_groups:
+        pkg_dep_groups: dict[str, list[str]] = pkg_project.setdefault(
+            "optional-dependencies", {}
+        )
+
+        for group, optional_deps in workspace_dep_groups.items():
+            deps = cast(list[str], pkg_dep_groups.setdefault(group, []))
+            deps_map = {canonicalize_name(Requirement(i).name): i for i in deps}
+
+            for dep in optional_deps:
+                if canonicalize_name(Requirement(dep).name) not in deps_map:
                     deps.append(dep)
-
-    if "optional-dependencies" in pkg_project:
-        optional_dep_groups: dict[str, list[str]] = pkg_project["optional-dependencies"]
-
-        for group, optional_deps in optional_dep_groups.items():
-            workspace_group_deps: list[str] = config.metadata.get(
-                "optional-dependencies", {}
-            ).get(group, [])
-            deps_map = {
-                canonicalize_name(Requirement(i).name): i for i in optional_deps
-            }
-            if not using_override:
-                for dep in workspace_group_deps:
-                    req = Requirement(dep)
-                    if canonicalize_name(req.name) not in deps_map:
-                        optional_deps.append(dep)
 
 
 def _get_standalone_config(root: Path, pkg: str):
@@ -85,7 +81,8 @@ def _update_config(config: Config, package: str) -> None:
 
     package_metadata = package_conf.pop("project", {})
     using_override = _using_override(config, package_conf)
-    _patch_dep(config, package_metadata, using_override)
+    if not using_override:
+        _add_workspace_deps(config, package_metadata)
 
     build_config = config.build_config
 
@@ -96,6 +93,11 @@ def _update_config(config: Config, package: str) -> None:
         config.data["project"] = package_metadata
     else:
         deep_merge(config.metadata, package_metadata)
+        # dependencies are already merged, restore them
+        config.metadata["dependencies"] = package_metadata.get("dependencies", [])
+        config.metadata["optional-dependencies"] = package_metadata.get(
+            "optional-dependencies", {}
+        )
 
     config.validate(config.data, config.root)
 
