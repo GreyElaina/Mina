@@ -21,7 +21,7 @@ def _get_build_target(context: Context) -> str | None:
     return (
         context.config_settings.get("mina-target")
         or os.environ.get("MINA_BUILD_TARGET")
-        or tool_mina.get("default-target")
+        or tool_mina.get("default-build-target")
     )
 
 
