@@ -19,6 +19,7 @@ class MinaCommandNamespace:
     dest: str
     clean: bool
     config_setting: list[str]
+    skip: list[str] | None
 
 
 class MinaBuildCommand(BuildCommand):
@@ -42,6 +43,7 @@ class MinaBuildCommand(BuildCommand):
     def handle(self, project: Project, options: argparse.Namespace):
         if TYPE_CHECKING:
             assert isinstance(options, MinaCommandNamespace)
+
         config_settings = {}
         if options.config_setting:
             for item in options.config_setting:
@@ -57,7 +59,7 @@ class MinaBuildCommand(BuildCommand):
             project.pyproject._data.get("tool", {}).get("mina", {}).get("packages", [])
         )
         for i in project.root.glob(".mina/*.toml"):
-            name = i.name[:-5]
+            name = i.stem
             if name not in mina_packages:
                 mina_packages.append(name)
 
@@ -65,7 +67,7 @@ class MinaBuildCommand(BuildCommand):
 
         if options.all:
             if packages:
-                raise PdmUsageError("Cannot specify packages and --all")
+                raise PdmUsageError("Cannot specify packages and --all at the same time")
             packages = mina_packages
 
         if not packages:
