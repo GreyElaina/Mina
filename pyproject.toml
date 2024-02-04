@@ -43,7 +43,7 @@ includes = [
 
 [tool.mina.packages.backend.project]
 name = "mina-build"
-version = "0.5.2"
+version = "0.6.0"
 description = "build backend for Mina Package Structure"
 dependencies = [
     "pdm-backend"
