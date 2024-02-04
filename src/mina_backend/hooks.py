@@ -14,6 +14,10 @@ else:
     from pdm.backend._vendor import tomli
 
 
+def _mina_enabled(context: Context) -> bool:
+    tool_mina = context.config.data.get("tool", {}).get("mina", {})
+    return bool(tool_mina.get("enabled"))
+
 def _get_build_target(context: Context) -> str | None:
     tool_mina = context.config.data.get("tool", {}).get("mina", {})
     return (
@@ -95,7 +99,11 @@ def deep_merge(source: MutableMapping, target: Mapping) -> Mapping:
 
 
 def pdm_build_initialize(context: Context) -> None:
+    if not _mina_enabled(context):
+        return
+
     mina_target = _get_build_target(context)
     if mina_target is None:
         return
+    
     _update_config(context.config, mina_target)
