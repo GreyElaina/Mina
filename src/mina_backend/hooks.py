@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Mapping, MutableMapping
 
 from pdm.backend._vendor.packaging.requirements import Requirement
 from pdm.backend._vendor.packaging.utils import canonicalize_name
@@ -34,7 +34,7 @@ def _using_override(config: Config, package_conf: dict[str, Any]) -> bool:
 def _add_workspace_deps(config: Config, pkg_project: dict[str, Any]) -> None:
     workspace_deps = config.metadata.get("dependencies", [])
     if workspace_deps:
-        deps = cast(list[str], pkg_project.setdefault("dependencies", []))
+        deps: list[str] = pkg_project.setdefault("dependencies", [])
         deps_map = {canonicalize_name(Requirement(i).name): i for i in deps}
         for dep in workspace_deps:
             if canonicalize_name(Requirement(dep).name) not in deps_map:
@@ -49,7 +49,7 @@ def _add_workspace_deps(config: Config, pkg_project: dict[str, Any]) -> None:
         )
 
         for group, optional_deps in workspace_dep_groups.items():
-            deps = cast(list[str], pkg_dep_groups.setdefault(group, []))
+            deps: list[str] = pkg_dep_groups.setdefault(group, [])
             deps_map = {canonicalize_name(Requirement(i).name): i for i in deps}
 
             for dep in optional_deps:
@@ -102,7 +102,7 @@ def _update_config(config: Config, package: str) -> None:
     config.validate(config.data, config.root)
 
 
-def deep_merge(source: dict, target: dict) -> dict:
+def deep_merge(source: MutableMapping, target: Mapping) -> Mapping:
     for key, value in target.items():
         if key in source and isinstance(value, list):
             source[key].extend(value)

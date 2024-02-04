@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+from typing import TYPE_CHECKING
 
 from pdm.cli.commands.build import Command as BuildCommand
 from pdm.cli.hooks import HookManager
@@ -38,7 +39,9 @@ class MinaBuildCommand(BuildCommand):
             help="Build all packages.",
         )
 
-    def handle(self, project: Project, options: MinaCommandNamespace):
+    def handle(self, project: Project, options: argparse.Namespace):
+        if TYPE_CHECKING:
+            assert isinstance(options, MinaCommandNamespace)
         config_settings = {}
         if options.config_setting:
             for item in options.config_setting:
