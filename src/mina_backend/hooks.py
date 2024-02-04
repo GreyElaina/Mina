@@ -31,30 +31,45 @@ def _using_override(config: Config, package_conf: dict[str, Any]) -> bool:
     return config.data.get("tool", {}).get("mina", {}).get("override-global", False)
 
 
-def _add_workspace_deps(config: Config, pkg_project: dict[str, Any]) -> None:
-    workspace_deps = config.metadata.get("dependencies", [])
-    if workspace_deps:
-        deps: list[str] = pkg_project.setdefault("dependencies", [])
-        deps_map = {canonicalize_name(Requirement(i).name): i for i in deps}
-        for dep in workspace_deps:
-            if canonicalize_name(Requirement(dep).name) not in deps_map:
-                deps.append(dep)
+def _get_mina_packages(context: Context):
+    mina_packages = (
+        context.config.data.get("tool", {}).get("mina", {}).get("packages", [])
+    )
+    for i in context.root.glob(".mina/*.toml"):
+        name = i.name[:-5]
+        if name not in mina_packages:
+            mina_packages.append(name)
+    return mina_packages
 
-    workspace_dep_groups: dict[str, list[str]] = config.metadata.get(
+def _patch_package_deps(context: Context, pkg_project: dict[str, Any]) -> None:
+    mina_packages = _get_mina_packages(context)
+
+    deps: list[str] = pkg_project.setdefault("dependencies", [])
+    patched_deps: list[str] = []
+    deps_map = {canonicalize_name(Requirement(i).name): i for i in deps}
+    for name, dep in deps_map.items():
+        if name not in mina_packages:
+            patched_deps.append(dep)
+        else:
+            patched_deps.append(dep)
+            # FIXME: 仅在发布了的情况下使用原项，否则将其指向工作区中的 editable mina package
+
+    pkg_project["dependencies"] = patched_deps
+
+    optional_dep_groups: dict[str, list[str]] = pkg_project.setdefault(
         "optional-dependencies", {}
     )
-    if workspace_dep_groups:
-        pkg_dep_groups: dict[str, list[str]] = pkg_project.setdefault(
-            "optional-dependencies", {}
-        )
-
-        for group, optional_deps in workspace_dep_groups.items():
-            deps: list[str] = pkg_dep_groups.setdefault(group, [])
-            deps_map = {canonicalize_name(Requirement(i).name): i for i in deps}
-
-            for dep in optional_deps:
-                if canonicalize_name(Requirement(dep).name) not in deps_map:
-                    deps.append(dep)
+    for group, optional_deps in optional_dep_groups.items():
+        optional_deps = {canonicalize_name(Requirement(i).name): i for i in optional_deps}
+        patched_optional_deps = []
+        for name, dep in optional_deps.items():
+            if name not in mina_packages:
+                patched_optional_deps.append(dep)
+            else:
+                patched_optional_deps.append(dep)
+                # FIXME: 仅在发布了的情况下使用原项，否则将其指向工作区中的 editable mina package
+        optional_dep_groups[group] = patched_optional_deps
+                
 
 
 def _get_standalone_config(root: Path, pkg: str):
@@ -65,7 +80,7 @@ def _get_standalone_config(root: Path, pkg: str):
     return tomli.loads(config_file.read_text())
 
 
-def _update_config(config: Config, package: str) -> None:
+def _update_config(context: Context, config: Config, package: str) -> None:
     package_conf = _get_standalone_config(config.root, package)
     if package_conf is not None:
         package_conf.setdefault("includes", []).append(f".mina/{package}.toml")
@@ -82,7 +97,7 @@ def _update_config(config: Config, package: str) -> None:
     package_metadata = package_conf.pop("project", {})
     using_override = _using_override(config, package_conf)
     if not using_override:
-        _add_workspace_deps(config, package_metadata)
+        _patch_package_deps(context, package_metadata)
 
     build_config = config.build_config
 
@@ -117,4 +132,4 @@ def pdm_build_initialize(context: Context) -> None:
     mina_target = _get_build_target(context)
     if mina_target is None:
         return
-    _update_config(context.config, mina_target)
+    _update_config(context, context.config, mina_target)
