@@ -9,6 +9,7 @@ from pdm.backend._vendor.packaging.requirements import Requirement
 from pdm.backend._vendor.packaging.utils import canonicalize_name
 from pdm.backend.config import Config
 from pdm.backend.hooks import Context
+from pdm.backend.editable import EditableBuilder
 
 if sys.version_info >= (3, 11):
     import tomllib as tomli
@@ -43,6 +44,7 @@ def _get_mina_packages(context: Context):
 
 def _patch_package_deps(context: Context, pkg_project: dict[str, Any]) -> None:
     mina_packages = _get_mina_packages(context)
+    is_editable = isinstance(context.builder, EditableBuilder)
 
     deps: list[str] = pkg_project.setdefault("dependencies", [])
     patched_deps: list[str] = []
@@ -50,9 +52,11 @@ def _patch_package_deps(context: Context, pkg_project: dict[str, Any]) -> None:
     for name, dep in deps_map.items():
         if name not in mina_packages:
             patched_deps.append(dep)
+        elif is_editable:
+            # FIXME: 需要一种更完备的方法判定 workspace
+            patched_deps.append(f"-e file://${{PROJECT_ROOT}}/#egg={name}")
         else:
             patched_deps.append(dep)
-            # FIXME: 仅在发布了的情况下使用原项，否则将其指向工作区中的 editable mina package
 
     pkg_project["dependencies"] = patched_deps
 
@@ -65,9 +69,11 @@ def _patch_package_deps(context: Context, pkg_project: dict[str, Any]) -> None:
         for name, dep in optional_deps.items():
             if name not in mina_packages:
                 patched_optional_deps.append(dep)
+            elif is_editable:
+            # FIXME: 需要一种更完备的方法判定 workspace
+                patched_optional_deps.append(f"-e file://${{PROJECT_ROOT}}/#egg={name}")
             else:
                 patched_optional_deps.append(dep)
-                # FIXME: 仅在发布了的情况下使用原项，否则将其指向工作区中的 editable mina package
         optional_dep_groups[group] = patched_optional_deps
                 
 
