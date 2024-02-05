@@ -131,7 +131,7 @@ If you wish, you can have Mina use an override workspace configuration to get th
 [tool.mina]
 override-global = true # Enable this feature globally
 
-[tool.mina.packages. "core"]
+[tool.mina.packages."core"]
 override = true # Enable this feature only in core subpackages
 ```
 
