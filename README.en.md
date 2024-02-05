@@ -106,7 +106,7 @@ dependencies = [ # Suggest filling in
     "aiohttp", # Although the `PEP-508` specification is used here, all packages will be redirected to the same name in project.dependencies.
     "starlette",
     "pydantic"
-optional-dependencies]
+]
 optional-dependencies = {
     "amnesia": ["graia-amnesia"] # example of optional dependencies
 }
