@@ -78,17 +78,17 @@ If you need to publish these modules, or subpackages, under `avilla` as multiple
 For example, in the above case we can declare a sub-package in `pyproject.toml` by filling in the following configs:
 
 ```toml
-[tool.mina.packages. "core"]
-[tool.mina.packages. "io"]
-[tool.mina.packages. "onebot"]
-[tool.mina.packages. "elizabeth"]
+[tool.mina.packages."core"]
+[tool.mina.packages."io"]
+[tool.mina.packages."onebot"]
+[tool.mina.packages."elizabeth"]
 ```
 
 The declaration of subpackages for `Mina` follows `PEP-621`.
 Here we take the example of the configuration subpackage `core`.
 
 ```toml
-[tool.mina.packages. "core"]
+[tool.mina.packages."core"]
 includes = [
     "avilla/core"
 ]
