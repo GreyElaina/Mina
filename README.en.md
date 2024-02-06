@@ -78,17 +78,17 @@ If you need to publish these modules, or subpackages, under `avilla` as multiple
 For example, in the above case we can declare a sub-package in `pyproject.toml` by filling in the following configs:
 
 ```toml
-[tool.mina.packages. "core"]
-[tool.mina.packages. "io"]
-[tool.mina.packages. "onebot"]
-[tool.mina.packages. "elizabeth"]
+[tool.mina.packages."core"]
+[tool.mina.packages."io"]
+[tool.mina.packages."onebot"]
+[tool.mina.packages."elizabeth"]
 ```
 
 The declaration of subpackages for `Mina` follows `PEP-621`.
 Here we take the example of the configuration subpackage `core`.
 
 ```toml
-[tool.mina.packages. "core"]
+[tool.mina.packages."core"]
 includes = [
     "avilla/core"
 ]
@@ -106,7 +106,7 @@ dependencies = [ # Suggest filling in
     "aiohttp", # Although the `PEP-508` specification is used here, all packages will be redirected to the same name in project.dependencies.
     "starlette",
     "pydantic"
-optional-dependencies]
+]
 optional-dependencies = {
     "amnesia": ["graia-amnesia"] # example of optional dependencies
 }
@@ -131,7 +131,7 @@ If you wish, you can have Mina use an override workspace configuration to get th
 [tool.mina]
 override-global = true # Enable this feature globally
 
-[tool.mina.packages. "core"]
+[tool.mina.packages."core"]
 override = true # Enable this feature only in core subpackages
 ```
 
