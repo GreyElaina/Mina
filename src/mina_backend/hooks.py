@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from typing import Mapping, MutableMapping
+
+from pdm.backend.hooks import Context
+
 import os
 import sys
 from pathlib import Path
-from typing import Any, Mapping, MutableMapping
+from typing import Any
 
 from pdm.backend.config import Config
 from pdm.backend.hooks import Context
@@ -14,11 +18,12 @@ else:
     from pdm.backend._vendor import tomli
 
 
-def _mina_enabled(context: Context) -> bool:
+def is_mina_enabled(context: Context) -> bool:
     tool_mina = context.config.data.get("tool", {}).get("mina", {})
     return bool(tool_mina.get("enabled"))
 
-def _get_build_target(context: Context) -> str | None:
+
+def get_build_target(context: Context) -> str | None:
     tool_mina = context.config.data.get("tool", {}).get("mina", {})
     return (
         context.config_settings.get("mina-target")
@@ -27,24 +32,24 @@ def _get_build_target(context: Context) -> str | None:
     )
 
 
-def _using_override(config: Config, package_conf: dict[str, Any]) -> bool:
+def is_override(config: Config, package_conf: dict[str, Any]) -> bool:
     if "override" in package_conf:
         return package_conf["override"]
     return config.data.get("tool", {}).get("mina", {}).get("override-global", False)
 
 
-def _get_mina_packages(context: Context):
-    mina_packages = (
-        context.config.data.get("tool", {}).get("mina", {}).get("packages", [])
+def mina_packages(context: Context) -> list[str]:
+    mina_packages = list(
+        context.config.data.get("tool", {}).get("mina", {}).get("packages", {}).keys()
     )
     for i in context.root.glob(".mina/*.toml"):
-        name = i.name[:-5]
+        name = i.stem
         if name not in mina_packages:
             mina_packages.append(name)
     return mina_packages
 
 
-def _get_standalone_config(root: Path, pkg: str):
+def get_mina_standalone_config(root: Path, pkg: str):
     config_file = root / ".mina" / f"{pkg}.toml"
     if not config_file.exists():
         return
@@ -52,39 +57,49 @@ def _get_standalone_config(root: Path, pkg: str):
     return tomli.loads(config_file.read_text())
 
 
-def _update_config(config: Config, package: str) -> None:
-    package_conf = _get_standalone_config(config.root, package)
+def get_package_info(context: Context, target: str):
+    if not is_mina_enabled(context):
+        raise ValueError("Mina is not enabled")
+
+    package_conf = get_mina_standalone_config(context.config.root, target)
     if package_conf is not None:
-        package_conf.setdefault("includes", []).append(f".mina/{package}.toml")
+        package_conf.setdefault("includes", []).append(f".mina/{target}.toml")
     else:
         package_conf = (
-            config.data.get("tool", {})
+            context.config.data.get("tool", {})
             .get("mina", {})
             .get("packages", {})
-            .get(package, None)
+            .get(target, None)
         )
         if package_conf is None:
-            raise ValueError(f"No package named '{package}'")
+            raise ValueError(f"No package named '{target}'")
 
-    package_metadata = package_conf.pop("project", {})
-    using_override = _using_override(config, package_conf)
+    return package_conf
 
-    build_config = config.build_config
+
+
+def _update_config(context: Context, package: str) -> None:
+    package_conf = get_package_info(context, package)
+
+    package_metadata = package_conf.get("project", {})
+    using_override = is_override(context.config, package_conf)
+
+    build_config = context.config.build_config
 
     # Override build config
     build_config.update(package_conf)
 
     if using_override:
-        config.data["project"] = package_metadata
+        context.config.data["project"] = package_metadata
     else:
-        deep_merge(config.metadata, package_metadata)
+        deep_merge(context.config.metadata, package_metadata)
         # dependencies are already merged, restore them
-        config.metadata["dependencies"] = package_metadata.get("dependencies", [])
-        config.metadata["optional-dependencies"] = package_metadata.get(
+        context.config.metadata["dependencies"] = package_metadata.get("dependencies", [])
+        context.config.metadata["optional-dependencies"] = package_metadata.get(
             "optional-dependencies", {}
         )
 
-    config.validate(config.data, config.root)
+    context.config.validate(context.config.data, context.config.root)
 
 
 def deep_merge(source: MutableMapping, target: Mapping) -> Mapping:
@@ -99,11 +114,11 @@ def deep_merge(source: MutableMapping, target: Mapping) -> Mapping:
 
 
 def pdm_build_initialize(context: Context) -> None:
-    if not _mina_enabled(context):
+    if not is_mina_enabled(context):
         return
 
-    mina_target = _get_build_target(context)
+    mina_target = get_build_target(context)
     if mina_target is None:
         return
     
-    _update_config(context.config, mina_target)
+    _update_config(context, mina_target)

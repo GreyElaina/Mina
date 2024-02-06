@@ -6,7 +6,11 @@ readme = "README.md"
 authors = [
     {name = "GreyElaina", email = "GreyElaina@outlook.com"},
 ]
+dependencies = ["mina-build"]
 license = {text = "MIT"}
+
+[project.entry-points."pdm.build.hook"]
+mina-workflow = "mina.workflow_hook"
 
 [tool.pdm.dev-dependencies]
 dev = [
@@ -33,8 +37,6 @@ mina = "mina.plugin:ensure_pdm"
 [tool.mina]
 enabled = true
 override-global = false  # default value
-
-[tool.mina.packages."cli-pdm"]
 
 [tool.mina.packages.backend]
 includes = [

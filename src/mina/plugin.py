@@ -8,6 +8,8 @@ from pdm.cli.commands.base import BaseCommand
 from mina.commands.build import MinaBuildCommand
 from mina.commands.list import MinaPackagesListCommand
 
+import mina.workflow.build_hook  # noqa: F401
+
 if TYPE_CHECKING:
     from pdm.core import Core
     from pdm.project.core import Project
