@@ -34,17 +34,6 @@ def _using_override(config: Config, package_conf: dict[str, Any]) -> bool:
     return config.data.get("tool", {}).get("mina", {}).get("override-global", False)
 
 
-def _get_mina_packages(context: Context):
-    mina_packages = (
-        context.config.data.get("tool", {}).get("mina", {}).get("packages", [])
-    )
-    for i in context.root.glob(".mina/*.toml"):
-        name = i.name[:-5]
-        if name not in mina_packages:
-            mina_packages.append(name)
-    return mina_packages
-
-
 def _get_standalone_config(root: Path, pkg: str):
     config_file = root / ".mina" / f"{pkg}.toml"
     if not config_file.exists():
