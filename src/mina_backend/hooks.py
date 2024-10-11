@@ -74,7 +74,7 @@ def _update_config(config: Config, package: str) -> None:
             "optional-dependencies", {}
         )
 
-    config.validate(config.data, config.root)
+    config.validate()
 
 
 def deep_merge(source: MutableMapping, target: Mapping) -> Mapping:
